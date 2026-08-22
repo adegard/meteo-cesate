@@ -42,20 +42,18 @@ data class Weather(
 
 object WeatherRepo {
 
-    private const val URL =
-        "https://api.open-meteo.com/v1/forecast?latitude=45.6497&longitude=9.1325" +
-        "&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation," +
-        "weather_code,wind_speed_10m,wind_direction_10m,surface_pressure" +
-        "&hourly=temperature_2m,precipitation_probability,weather_code" +
-        "&daily=weather_code,temperature_2m_max,temperature_2m_min," +
-        "precipitation_probability_max,uv_index_max,sunrise,sunset" +
-        "&timezone=Europe%2FBerlin&forecast_days=8"
-
     private val client = OkHttpClient()
 
-    suspend fun fetch(): Weather = withContext(Dispatchers.IO) {
-        val req = Request.Builder().url(URL).build()
-        client.newCall(req).execute().use { resp ->
+    suspend fun fetch(city: City): Weather = withContext(Dispatchers.IO) {
+        val url =
+            "https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}" +
+            "&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation," +
+            "weather_code,wind_speed_10m,wind_direction_10m,surface_pressure" +
+            "&hourly=temperature_2m,precipitation_probability,weather_code" +
+            "&daily=weather_code,temperature_2m_max,temperature_2m_min," +
+            "precipitation_probability_max,uv_index_max,sunrise,sunset" +
+            "&timezone=auto&forecast_days=8"
+        client.newCall(Request.Builder().url(url).build()).execute().use { resp ->
             check(resp.isSuccessful) { "HTTP ${resp.code}" }
             parse(resp.body!!.string())
         }
@@ -100,7 +98,7 @@ object WeatherRepo {
         val uvMaxA = d.getJSONArray("uv_index_max")
         val riseA = d.getJSONArray("sunrise")
         val setA = d.getJSONArray("sunset")
-        val df = java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.ITALIAN)
+        val df = java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.ENGLISH)
         for (j in 0 until 7) {
             val cal = java.util.Calendar.getInstance()
             try {
@@ -108,7 +106,7 @@ object WeatherRepo {
             } catch (_: Exception) {}
             days += Day(
                 date = dayDates.getString(j),
-                label = if (j == 0) "Oggi" else capitalize(df.format(cal.time)),
+                label = if (j == 0) "Today" else df.format(cal.time),
                 code = dayCodes.getInt(j),
                 tMax = tMaxA.getDouble(j),
                 tMin = tMinA.getDouble(j),
@@ -132,9 +130,6 @@ object WeatherRepo {
             days = days
         )
     }
-
-    private fun capitalize(s: String) =
-        s.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.ITALIAN) else it.toString() }
 
     fun firstStorm(w: Weather, withinHours: Int = 12): Hour? =
         w.hours.take(withinHours).firstOrNull { Wmo.isStorm(it.code) }

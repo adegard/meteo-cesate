@@ -2,34 +2,34 @@ package com.adegard.meteocesate
 
 object Wmo {
     fun label(code: Int): String = when (code) {
-        0 -> "Sereno"
-        1 -> "Prevalentemente sereno"
-        2 -> "Poco nuvoloso"
-        3 -> "Coperto"
-        45 -> "Nebbia"
-        48 -> "Nebbia con brina"
-        51 -> "Pioviggine debole"
-        53 -> "Pioviggine"
-        55 -> "Pioviggine intensa"
-        56 -> "Pioviggine gelata"
-        57 -> "Pioviggine gelata intensa"
-        61 -> "Pioggia debole"
-        63 -> "Pioggia moderata"
-        65 -> "Pioggia forte"
-        66 -> "Pioggia gelata"
-        67 -> "Pioggia gelata forte"
-        71 -> "Neve debole"
-        73 -> "Neve moderata"
-        75 -> "Neve forte"
-        77 -> "Gragnola"
-        80 -> "Rovesci deboli"
-        81 -> "Rovesci"
-        82 -> "Rovesci forti"
-        85 -> "Rovesci di neve"
-        86 -> "Rovesci di neve forti"
-        95 -> "Temporale"
-        96 -> "Temporale con grandine"
-        99 -> "Temporale forte con grandine"
+        0 -> "Clear sky"
+        1 -> "Mainly clear"
+        2 -> "Partly cloudy"
+        3 -> "Overcast"
+        45 -> "Fog"
+        48 -> "Freezing fog"
+        51 -> "Light drizzle"
+        53 -> "Drizzle"
+        55 -> "Dense drizzle"
+        56 -> "Freezing drizzle"
+        57 -> "Dense freezing drizzle"
+        61 -> "Light rain"
+        63 -> "Rain"
+        65 -> "Heavy rain"
+        66 -> "Freezing rain"
+        67 -> "Heavy freezing rain"
+        71 -> "Light snow"
+        73 -> "Snow"
+        75 -> "Heavy snow"
+        77 -> "Snow grains"
+        80 -> "Light showers"
+        81 -> "Showers"
+        82 -> "Violent showers"
+        85 -> "Snow showers"
+        86 -> "Heavy snow showers"
+        95 -> "Thunderstorm"
+        96 -> "Thunderstorm, light hail"
+        99 -> "Severe thunderstorm with hail"
         else -> "—"
     }
 
@@ -51,18 +51,18 @@ object Wmo {
     fun isHail(code: Int) = code >= 96
 
     fun uvText(uv: Double): String = when {
-        uv < 3 -> "Basso"; uv < 6 -> "Moderato"; uv < 8 -> "Alto"; uv < 11 -> "Molto alto"
-        else -> "Estremo"
+        uv < 3 -> "Low"; uv < 6 -> "Moderate"; uv < 8 -> "High"; uv < 11 -> "Very high"
+        else -> "Extreme"
     }
 
     private val DIRS = arrayOf(
         "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-        "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"
+        "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"
     )
 
     fun dir(deg: Int): String = DIRS[(((deg % 360) + 360) % 360 / 22.5).toInt() % 16]
 
-    /** "oggi alle 15:00" / "domani alle 03:00" / "mercoledì alle 09:00" */
+    /** "today at 15:00" / "tomorrow at 03:00" / "Wednesday at 09:00" */
     fun whenLabel(iso: String): String {
         val cal = java.util.Calendar.getInstance()
         val today = java.util.Calendar.getInstance()
@@ -75,12 +75,9 @@ object Wmo {
         val hhmm = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
         val dayDiff = ((cal.timeInMillis - today.timeInMillis) / 86400000L).toInt()
         return when {
-            dayDiff <= 0 -> "oggi alle $hhmm"
-            dayDiff == 1 -> "domani alle $hhmm"
-            else -> {
-                val name = java.text.SimpleDateFormat("EEEE", java.util.Locale.ITALIAN).format(cal.time)
-                "$name alle $hhmm"
-            }
+            dayDiff <= 0 -> "today at $hhmm"
+            dayDiff == 1 -> "tomorrow at $hhmm"
+            else -> java.text.SimpleDateFormat("EEEE", java.util.Locale.ENGLISH).format(cal.time) + " at $hhmm"
         }
     }
 }

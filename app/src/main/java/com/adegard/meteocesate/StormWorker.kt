@@ -22,39 +22,40 @@ class StormWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx,
 
     override suspend fun doWork(): Result {
         return try {
-            val w = WeatherRepo.fetch()
+            val city = Prefs.getCity(applicationContext)
+            val w = WeatherRepo.fetch(city)
             val storm = WeatherRepo.firstStorm(w) ?: return Result.success()
 
             val prefs = applicationContext.getSharedPreferences("storm", Context.MODE_PRIVATE)
-            if (prefs.getString("last", null) == storm.iso) return Result.success()
-            prefs.edit().putString("last", storm.iso).apply()
+            val key = "${city.lat},${city.lon}|${storm.iso}"
+            if (prefs.getString("last", null) == key) return Result.success()
+            prefs.edit().putString("last", key).apply()
 
-            notify(storm)
+            notify(city, storm)
             Result.success()
         } catch (e: Exception) {
             if (runAttemptCount < 3) Result.retry() else Result.failure()
         }
     }
 
-    private fun notify(s: Hour) {
+    private fun notify(city: City, s: Hour) {
         val ctx = applicationContext
         val nm = NotificationManagerCompat.from(ctx)
         if (Build.VERSION.SDK_INT >= 26) {
             nm.createNotificationChannel(
-                NotificationChannel(CHANNEL, "Avvisi temporali", NotificationManager.IMPORTANCE_HIGH).apply {
-                    description = "Temporali previsti a Cesate"
+                NotificationChannel(CHANNEL, "Thunderstorm alerts", NotificationManager.IMPORTANCE_HIGH).apply {
+                    description = "Warnings when thunderstorms are forecast for your selected city"
                 }
             )
         }
-        val hail = Wmo.isHail(s.code)
         val text = buildString {
-            append("Temporali previsti ").append(Wmo.whenLabel(s.iso))
-            if (hail) append(" · possibile grandine")
-            append(". Dettagli nell'app.")
+            append("Expected ").append(Wmo.whenLabel(s.iso))
+            if (Wmo.isHail(s.code)) append(" · possible hail")
+            append(". Tap for details.")
         }
         val notif = NotificationCompat.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat)
-            .setContentTitle("⚠️ Temporali a Cesate")
+            .setContentTitle("⚠️ Thunderstorms in ${city.name}")
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -64,13 +65,16 @@ class StormWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx,
         try {
             val granted = Build.VERSION.SDK_INT < 33 ||
                 ActivityCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-            if (granted) nm.notify(s.iso.hashCode(), notif)
+            if (granted) nm.notify(keyHash(city, s), notif)
         } catch (_: SecurityException) {
         }
     }
 
+    private fun keyHash(city: City, s: Hour): Int =
+        ("${city.lat},${city.lon}|${s.iso}").hashCode()
+
     companion object {
-        const val CHANNEL = "temporali"
+        const val CHANNEL = "thunderstorms"
         private const val WORK = "storm_check"
 
         fun schedule(context: Context) {

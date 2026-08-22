@@ -46,6 +46,17 @@
                 </LinearLayout>
 
                 <Button
+                    android:id="@+id/btnSearch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/card"
+                    android:contentDescription="@string/search_cd"
+                    android:text="🔍"
+                    android:textColor="@color/accent"
+                    android:textSize="12sp" />
+
+                <Button
                     android:id="@+id/btnBell"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -129,7 +140,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
-                    android:text="PROSSIME 24 ORE"
+                    android:text="@string/next_24h"
                     android:textColor="@color/muted"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -159,7 +170,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="4dp"
-                    android:text="PROSSIMI 7 GIORNI"
+                    android:text="@string/next_7d"
                     android:textColor="@color/muted"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -177,7 +188,7 @@
                 android:layout_marginTop="6dp"
                 android:gravity="center"
                 android:paddingBottom="16dp"
-                android:text="Dati: open-meteo.com · nessun tracciamento, nessuna pubblicità, nessun cookie"
+                android:text="@string/footer"
                 android:textColor="@color/muted"
                 android:textSize="10sp" />
         </LinearLayout>

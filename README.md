@@ -1,22 +1,33 @@
 # Meteo Cesate (Android)
 
-App Kotlin leggera per le previsioni di Cesate (MI): nessuna pubblicità, nessun cookie, nessun tracciamento.
-Unica fonte dati: [Open-Meteo](https://open-meteo.com) (senza API key).
+Lightweight Kotlin weather app for **Cesate (MI), Italy** — with worldwide city selection.
+No ads, no cookies, no tracking. Single data source: [Open-Meteo](https://open-meteo.com) (free, no API key).
 
-## Funzioni
-- Condizioni attuali (temp, percepita, umidità, vento, pressione, UV, alba/tramonto)
-- Prossime 24 ore e 7 giorni
-- **Avvisi temporali**: notifica push (WorkManager, ogni 15 min) quando sono previsti temporali/grandinate entro 12 ore (codici WMO 95–99)
+## Features
+- Current conditions (temp, feels like, humidity, wind, pressure, UV, sunrise/sunset)
+- Next 24 hours + 7-day forecast with min/max bars and rain chance
+- 🌍 **Any city worldwide** — tap 🔍 and search (Open-Meteo geocoding)
+- ⛈️ **Thunderstorm alerts**: high-priority notification when thunderstorms/hail are forecast within 12 h for your selected city (WorkManager check every 15 min, battery-friendly, Doze-aware)
 
 ## Download APK
-APK debug scaricabile dal branch `status` (`meteo-cesate-debug.apk`) o dagli artifact delle Actions.
+Grab `meteo-cesate-debug.apk` from the [`status` branch](https://github.com/adegard/meteo-cesate/tree/status),
+or download the artifact from the latest [Actions run](https://github.com/adegard/meteo-cesate/actions).
+
+Direct link:
+```
+https://github.com/adegard/meteo-cesate/raw/status/meteo-cesate-debug.apk
+```
+
+## Install
+1. Transfer the APK to your phone and allow "Install unknown apps"
+2. Open the app → tap **Alerts ⛈️** to grant notification permission
 
 ## Build
 ```bash
 ./gradlew assembleDebug
 ```
-La CI (GitHub Actions) compila automaticamente ad ogni push su `main`.
+CI (GitHub Actions) rebuilds automatically on every push to `main` and publishes the APK to the `status` branch.
 
-## Installare
-Trasferisci l'APK sul telefono e consenti "Installa app sconosciute".
-Al primo avvio premi **Avvisi ⛈️** per concedere il permesso notifiche.
+## Privacy
+The app talks only to `api.open-meteo.com` and `geocoding-api.open-meteo.com`.
+No analytics, no ads SDKs, no cookies, no location permission — the selected city is stored locally on device.

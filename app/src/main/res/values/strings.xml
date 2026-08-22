@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Meteo Cesate</string>
-    <string name="alerts_on">Avvisi ON</string>
-    <string name="alerts_off">Avvisi ⛈️</string>
-    <string name="enable_alerts">Attiva avvisi temporali dalle impostazioni</string>
+    <string name="alerts_on">Alerts ON</string>
+    <string name="alerts_off">Alerts ⛈️</string>
+    <string name="search_cd">Change city</string>
+    <string name="next_24h">NEXT 24 HOURS</string>
+    <string name="next_7d">NEXT 7 DAYS</string>
+    <string name="footer">Data: open-meteo.com · no tracking, no ads, no cookies</string>
+    <string name="pick_city">Choose city</string>
+    <string name="search_hint">Search any city worldwide…</string>
+    <string name="no_results">No cities found</string>
+    <string name="alerts_enabled">Thunderstorm alerts active</string>
+    <string name="permission_denied">Permission denied: enable notifications in Settings to receive alerts</string>
+    <string name="alerts_already">Thunderstorm alerts already active</string>
+    <string name="city_set">City set: %1$s</string>
 </resources>

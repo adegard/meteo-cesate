@@ -5,23 +5,31 @@ import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
 import android.view.Gravity
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var swipe: SwipeRefreshLayout
+    private lateinit var tvTitle: TextView
     private lateinit var tvUpd: TextView
     private lateinit var tvAlert: TextView
     private lateinit var tvIcon: TextView
@@ -37,9 +45,9 @@ class MainActivity : AppCompatActivity() {
             updateBell()
             if (granted) {
                 StormWorker.schedule(this)
-                toast("Avvisi temporali attivi")
+                toast(getString(R.string.alerts_enabled))
             } else {
-                toast("Permesso negato: abilitalo dalle impostazioni per gli avvisi")
+                toast(getString(R.string.permission_denied))
             }
         }
 
@@ -48,6 +56,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         swipe = findViewById(R.id.swipe)
+        tvTitle = findViewById(R.id.tvTitle)
         tvUpd = findViewById(R.id.tvUpd)
         tvAlert = findViewById(R.id.tvAlert)
         tvIcon = findViewById(R.id.tvIcon)
@@ -58,6 +67,7 @@ class MainActivity : AppCompatActivity() {
         llDays = findViewById(R.id.llDays)
         btnBell = findViewById(R.id.btnBell)
 
+        findViewById<Button>(R.id.btnSearch).setOnClickListener { showCityPicker() }
         btnBell.setOnClickListener {
             if (Build.VERSION.SDK_INT >= 33 &&
                 ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
@@ -65,7 +75,7 @@ class MainActivity : AppCompatActivity() {
                 permLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             } else {
                 StormWorker.schedule(this)
-                toast("Avvisi temporali già attivi")
+                toast(getString(R.string.alerts_already))
             }
         }
         swipe.setOnRefreshListener { load() }
@@ -73,6 +83,67 @@ class MainActivity : AppCompatActivity() {
         load()
         StormWorker.schedule(this)
     }
+
+    /* ---------- city picker ---------- */
+
+    private fun showCityPicker() {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(8), dp(20), dp(16))
+        }
+        val edit = EditText(this).apply {
+            hint = getString(R.string.search_hint)
+            inputType = InputType.TYPE_CLASS_TEXT
+            singleLine = true
+        }
+        val list = ListView(this)
+        box.addView(edit)
+        box.addView(list, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(320)))
+
+        val items = mutableListOf<City>()
+        val labels = mutableListOf<String>()
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, labels)
+        list.adapter = adapter
+
+        var job: Job? = null
+        edit.addTextChangedListener(object : android.text.TextWatcher {
+            override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) {
+                val q = s?.toString()?.trim().orEmpty()
+                job?.cancel()
+                if (q.length < 2) return
+                job = lifecycleScope.launch {
+                    delay(350)
+                    try {
+                        val found = Geocoder.search(q)
+                        items.clear(); items.addAll(found)
+                        labels.clear(); labels.addAll(found.map { it.display })
+                        if (found.isEmpty()) labels.add(getString(R.string.no_results))
+                        adapter.notifyDataSetChanged()
+                    } catch (_: Exception) {}
+                }
+            }
+            override fun beforeTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        })
+
+        list.setOnItemClickListener { _, _, pos, _ ->
+            val city = items.getOrNull(pos) ?: return@setOnItemClickListener
+            Prefs.saveCity(this, city)
+            StormWorker.schedule(this)
+            load()
+            toast(getString(R.string.city_set, city.name))
+            dlg.dismiss()
+        }
+
+        val dlg = AlertDialog.Builder(this)
+            .setTitle(R.string.pick_city)
+            .setView(box)
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        dlg.show()
+    }
+
+    /* ---------- data ---------- */
 
     private fun updateBell() {
         val on = Build.VERSION.SDK_INT < 33 ||
@@ -83,14 +154,19 @@ class MainActivity : AppCompatActivity() {
     private fun load() {
         lifecycleScope.launch {
             try {
-                val w = WeatherRepo.fetch()
+                val city = Prefs.getCity(this@MainActivity)
+                val w = WeatherRepo.fetch(city)
                 render(w)
                 showAlert(w)
-                tvUpd.text = "aggiornato " + java.text.SimpleDateFormat(
-                    "HH:mm", java.util.Locale.ITALIAN
-                ).format(java.util.Date())
+                tvTitle.text = city.name
+                val loc = listOf(city.admin1, city.country).filter { it.isNotBlank() }.joinToString(", ")
+                tvUpd.text = buildString {
+                    if (loc.isNotEmpty()) append("$loc · ")
+                    append("updated ")
+                    append(java.text.SimpleDateFormat("HH:mm", java.util.Locale.US).format(java.util.Date()))
+                }
             } catch (e: Exception) {
-                tvUpd.text = "errore di rete: ${e.message}"
+                tvUpd.text = "network error: ${e.message}"
             } finally {
                 swipe.isRefreshing = false
             }
@@ -104,12 +180,14 @@ class MainActivity : AppCompatActivity() {
         } else {
             tvAlert.visibility = View.VISIBLE
             tvAlert.text = buildString {
-                append("⚠️ Temporali in arrivo — previsti ")
+                append("⚠️ Thunderstorms coming — expected ")
                 append(Wmo.whenLabel(s.iso))
-                if (Wmo.isHail(s.code)) append(" (possibile grandine)")
+                if (Wmo.isHail(s.code)) append(" (possible hail)")
             }
         }
     }
+
+    /* ---------- rendering ---------- */
 
     private fun render(w: Weather) {
         tvIcon.text = Wmo.icon(w.curCode)
@@ -119,24 +197,24 @@ class MainActivity : AppCompatActivity() {
         gridNow.removeAllViews()
         val d0 = w.days.firstOrNull()
         val cells = mutableListOf(
-            "Percepita" to "${Math.round(w.curApp)}°",
-            "Umidità" to "${w.curHum}%",
-            "Vento" to "${Math.round(w.curWind)} km/h ${Wmo.dir(w.curDir)}",
-            "Pressione" to "${Math.round(w.curPres)} mb",
-            "Pioggia 1h" to if (w.curPrec > 0) "${w.curPrec} mm" else "assenti"
+            "Feels like" to "${Math.round(w.curApp)}°",
+            "Humidity" to "${w.curHum}%",
+            "Wind" to "${Math.round(w.curWind)} km/h ${Wmo.dir(w.curDir)}",
+            "Pressure" to "${Math.round(w.curPres)} mb",
+            "Rain 1h" to if (w.curPrec > 0) "${w.curPrec} mm" else "none"
         )
         if (d0 != null) {
             cells += "UV max" to String.format(java.util.Locale.US, "%.1f %s", d0.uvMax, Wmo.uvText(d0.uvMax))
-            cells += "Alba" to d0.sunrise
-            cells += "Tramonto" to d0.sunset
-            cells += "Prob. oggi" to "${d0.popMax}%"
+            cells += "Sunrise" to d0.sunrise
+            cells += "Sunset" to d0.sunset
+            cells += "Rain chance" to "${d0.popMax}%"
         }
         var col = 0
         while (col < cells.size) {
             val rowLayout = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
             repeat(3) { k ->
-                val ctxIdx = col + k
-                if (ctxIdx < cells.size) rowLayout.addView(makeCell(cells[ctxIdx].first, cells[ctxIdx].second), cellParams())
+                val idx2 = col + k
+                if (idx2 < cells.size) rowLayout.addView(makeCell(cells[idx2].first, cells[idx2].second), cellParams())
                 else rowLayout.addView(View(this), cellParams())
             }
             gridNow.addView(
@@ -154,7 +232,7 @@ class MainActivity : AppCompatActivity() {
                 background = ContextCompat.getDrawable(context, R.drawable.bg_cell)
                 setPadding(dp(6), dp(8), dp(6), dp(8))
             }
-            addText(colView, if (idx == 0) "ora" else h.hhmm, 10, R.color.muted, false)
+            addText(colView, if (idx == 0) "now" else h.hhmm, 10, R.color.muted, false)
             addText(colView, Wmo.icon(h.code), 20, R.color.txt, false)
             addText(colView, "${Math.round(h.temp)}°", 14, R.color.txt, true)
             addText(colView, h.pop?.let { "$it%" } ?: "", 9, R.color.accent, false)
