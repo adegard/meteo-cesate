@@ -1,6 +1,6 @@
 # Meteo Cesate (Android)
 
-Lightweight Kotlin weather app for **Cesate (MI), Italy** — with worldwide city selection.
+Lightweight Kotlin weather app with worldwide city selection.
 No ads, no cookies, no tracking. Single data source: [Open-Meteo](https://open-meteo.com) (free, no API key).
 
 ## Features
