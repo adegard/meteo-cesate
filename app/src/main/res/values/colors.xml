@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#0F172A</color>
+    <color name="card">#1E293B</color>
+    <color name="cell">#263349</color>
+    <color name="line">#334155</color>
+    <color name="txt">#E2E8F0</color>
+    <color name="muted">#94A3B8</color>
+    <color name="accent">#38BDF8</color>
+    <color name="alertBg">#7F1D1D</color>
+    <color name="alertLine">#EF4444</color>
+    <color name="warn">#F59E0B</color>
+</resources>
