@@ -10,13 +10,7 @@ No ads, no cookies, no tracking. Single data source: [Open-Meteo](https://open-m
 - ⛈️ **Thunderstorm alerts**: high-priority notification when thunderstorms/hail are forecast within 12 h for your selected city (WorkManager check every 15 min, battery-friendly, Doze-aware)
 
 ## Download APK
-Grab `meteo-cesate-debug.apk` from the [`status` branch](https://github.com/adegard/meteo-cesate/tree/status),
-or download the artifact from the latest [Actions run](https://github.com/adegard/meteo-cesate/actions).
-
-Direct link:
-```
-https://github.com/adegard/meteo-cesate/raw/status/meteo-cesate-debug.apk
-```
+Grab it from Release
 
 ## Install
 1. Transfer the APK to your phone and allow "Install unknown apps"
