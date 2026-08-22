@@ -94,7 +94,7 @@ class MainActivity : AppCompatActivity() {
         val edit = EditText(this).apply {
             hint = getString(R.string.search_hint)
             inputType = InputType.TYPE_CLASS_TEXT
-            singleLine = true
+            setSingleLine(true)
         }
         val list = ListView(this)
         box.addView(edit)
@@ -126,16 +126,17 @@ class MainActivity : AppCompatActivity() {
             override fun afterTextChanged(s: android.text.Editable?) {}
         })
 
+        var dlg: AlertDialog? = null
         list.setOnItemClickListener { _, _, pos, _ ->
             val city = items.getOrNull(pos) ?: return@setOnItemClickListener
             Prefs.saveCity(this, city)
             StormWorker.schedule(this)
             load()
             toast(getString(R.string.city_set, city.name))
-            dlg.dismiss()
+            dlg?.dismiss()
         }
 
-        val dlg = AlertDialog.Builder(this)
+        dlg = AlertDialog.Builder(this)
             .setTitle(R.string.pick_city)
             .setView(box)
             .setNegativeButton(android.R.string.cancel, null)
