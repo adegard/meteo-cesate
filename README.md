@@ -9,6 +9,12 @@ No ads, no cookies, no tracking. Single data source: [Open-Meteo](https://open-m
 - 🌍 **Any city worldwide** — tap 🔍 and search (Open-Meteo geocoding)
 - ⛈️ **Thunderstorm alerts**: high-priority notification when thunderstorms/hail are forecast within 12 h for your selected city (WorkManager check every 15 min, battery-friendly, Doze-aware)
 
+## Screenshot
+
+<p align="center">
+  <img src="docs/screenshot.png" alt="Meteo Cesate app screenshot" width="300" />
+</p>
+
 ## Download APK
 Grab it from Release
 
