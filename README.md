@@ -33,3 +33,7 @@ CI (GitHub Actions) rebuilds automatically on every push to `main` and publishes
 ## Privacy
 The app talks only to `api.open-meteo.com` and `geocoding-api.open-meteo.com`.
 No analytics, no ads SDKs, no cookies, no location permission — the selected city is stored locally on device.
+
+---
+
+For an overview of all my other projects, see https://adegard.github.io/blog/
